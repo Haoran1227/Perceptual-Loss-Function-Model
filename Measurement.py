@@ -149,7 +149,7 @@ for SNR in SNR_situ_array:
         dataframe = pd.DataFrame(
             {'': ['SDR', 'SIR', 'SAR', 'PESQ', ' '], 'mixture': mixture_score, 'baseline': baseline_score,
              'percep_loss': pw_score, 'PESQ_loss': pesq_score})
-        dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Typing_noise_case' + dB_exchange_dict[
+        dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Thunder_noise_case_' + dB_exchange_dict[
             SNR] + '_measurement.csv', index=False, mode='a+', sep=',')
 
     # Store the average scores as csv files
@@ -162,6 +162,6 @@ for SNR in SNR_situ_array:
     avg_pw_score.append(' ')
     avg_pesq_score.append(' ')
     dataframe = pd.DataFrame({'':['SDR','SIR','SAR','PESQ',' '], 'mixture':avg_mixture_score,'baseline':avg_baseline_score,'percep_loss':avg_pw_score,'PESQ_loss':avg_pesq_score})
-    dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/average_' + 'Typing_noise_case_' + dB_exchange_dict[SNR] +'_measurement.csv', index=False, mode = 'a+', sep=',')
+    dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Thunder_noise_case_' + dB_exchange_dict[SNR] +'_average_measurement.csv', index=False, mode = 'a+', sep=',')
 
 
