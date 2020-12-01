@@ -1,3 +1,15 @@
+#####################################################################################
+# Measurement -
+# Measure the performance (SDR,SAR,SIR,PESQ) of the enhanced signals.
+#
+# Friedrich-Alexander-Universität Erlangen-Nürnberg
+# Lehrstuhl für Multimediakommunikation und Signalverarbeitung (LMS)
+# Cauerstrasse 7
+# 91054 Erlangen
+# Germany
+# 2020 - 11 - 30
+# (c) Haoran Zhao
+#####################################################################################
 import mir_eval
 import numpy as np
 import scipy.io as sio
@@ -76,49 +88,80 @@ def quality_eval_one_audio(estimated_sources, reference_sources, start_ind=float
     return metrics_input, metrics_output
 
 # Settings
-Fs= 16000
+Fs= 8000
 pesq_window = 30    #calculate pesq score per 30 seconds
 SNR_situ_array = ["-21","-26","-31","-36","-41","-46"]
 dB_exchange_dict = {"-21":"-5dB","-26":"0dB","-31":"5dB","-36":"10dB","-41":"15dB","-46":"20dB"}
 database_dir='./generated_files/'
-noi_type_str_vec = {1:'PED', 2:'CAF', 3:'STR'}
-noise_type_num = 3
 
 for SNR in SNR_situ_array:
-    for k in range(1,noise_type_num+1):
-        mixture_dir = database_dir + SNR + '/y_test_data_snr_' + SNR + '_' + str(k) + '.mat'
-        reference_dir = database_dir + SNR + '/s_' + str(k) + '.mat'
-        s_hat_baseline_dir= database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_baseline_' + str(k) + '.mat'
-        s_hat_pw_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_weight_filter_AMR_direct_freqz_' + str(k) + '.mat'
+    mixture_dir = database_dir + SNR + '/y_test_data_snr_' + SNR + '.mat'
+    reference_dir = database_dir + SNR + '/s' + '.mat'
+    s_hat_baseline_dir= database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_baseline' + '.mat'
+    s_hat_pw_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_weight_filter_AMR_direct_freqz' + '.mat'
+    s_hat_pesq_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_PESQ' + '.mat'
 
-        # Load data
-        mixture_tmp = sio.loadmat(os.path.normcase(mixture_dir))
-        mixture = mixture_tmp['y_vec_temp']
-        reference_tmp = sio.loadmat(os.path.normcase(reference_dir))
-        reference = reference_tmp['s_vec_temp']
-        s_hat_baseline_tmp = sio.loadmat(os.path.normcase(s_hat_baseline_dir))
-        s_hat_baseline = s_hat_baseline_tmp['s_hat_temp']
-        s_hat_pw_tmp = sio.loadmat(os.path.normcase(s_hat_pw_dir))
-        s_hat_pw = s_hat_pw_tmp['s_hat_temp']
+    # Load data
+    mixture_tmp = sio.loadmat(os.path.normcase(mixture_dir))
+    mixture = mixture_tmp['y_vec_temp']
+    reference_tmp = sio.loadmat(os.path.normcase(reference_dir))
+    reference = reference_tmp['s_vec_temp']
+    s_hat_baseline_tmp = sio.loadmat(os.path.normcase(s_hat_baseline_dir))
+    s_hat_baseline = s_hat_baseline_tmp['s_hat_temp']
+    s_hat_pw_tmp = sio.loadmat(os.path.normcase(s_hat_pw_dir))
+    s_hat_pw = s_hat_pw_tmp['s_hat_temp']
+    s_hat_pesq_tmp = sio.loadmat(os.path.normcase(s_hat_pesq_dir))
+    s_hat_pesq = s_hat_pesq_tmp['s_hat_temp']
 
-        # Calculate measurements
-        data_length = len(reference[0])
-        for i in range(data_length//(pesq_window*Fs)):       # calculate pesq per 30 seconds
-            _, mixture_score = quality_eval_one_audio(mixture[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
-                                                 reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
-            _, baseline_score = quality_eval_one_audio(s_hat_baseline[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
-                                                      reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
-            _, pw_score = quality_eval_one_audio(s_hat_pw[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
-                                                 reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
-            mixture_score = list(mixture_score.reshape(-1))
-            baseline_score = list(baseline_score.reshape(-1))
-            pw_score = list(pw_score.reshape(-1))
+    # Calculate measurements
+    data_length = len(reference[0])
+    frame_num = data_length//(pesq_window*Fs)
+    print(data_length)
+    avg_mixture_score=np.zeros((1,4))
+    avg_baseline_score=np.zeros((1,4))
+    avg_pw_score = np.zeros((1, 4))
+    avg_pesq_score = np.zeros((1, 4))
+    for i in range(frame_num):       # calculate pesq per pesq window (30 seconds)
+        _, mixture_score = quality_eval_one_audio(mixture[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
+                                             reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
+        _, baseline_score = quality_eval_one_audio(s_hat_baseline[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
+                                                  reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
+        _, pw_score = quality_eval_one_audio(s_hat_pw[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
+                                             reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
+        _, pesq_score = quality_eval_one_audio(s_hat_pesq[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
+                                                   reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
 
-            # Store as csv files
-            mixture_score.append(' ')
-            baseline_score.append(' ')
-            pw_score.append(' ')
-            dataframe = pd.DataFrame({'':['SDR','SIR','SAR','PESQ',' '], 'mixture':mixture_score,'baseline':baseline_score,'percep_loss':pw_score})
-            dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + noi_type_str_vec[k] + '_noise_case_measurement.csv', index=False, mode = 'a+', sep=',')
+        # Help to calculate the average score
+        avg_mixture_score += mixture_score
+        avg_baseline_score += baseline_score
+        avg_pw_score += pw_score
+        avg_pesq_score += pesq_score
+
+        # Store the segmental scores as csv files
+        mixture_score = list(mixture_score.reshape(-1))
+        baseline_score = list(baseline_score.reshape(-1))
+        pw_score = list(pw_score.reshape(-1))
+        pesq_score = list(pesq_score.reshape(-1))
+        mixture_score.append(' ')
+        baseline_score.append(' ')
+        pw_score.append(' ')
+        pesq_score.append(' ')
+        dataframe = pd.DataFrame(
+            {'': ['SDR', 'SIR', 'SAR', 'PESQ', ' '], 'mixture': mixture_score, 'baseline': baseline_score,
+             'percep_loss': pw_score, 'PESQ_loss': pesq_score})
+        dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Typing_noise_case' + dB_exchange_dict[
+            SNR] + '_measurement.csv', index=False, mode='a+', sep=',')
+
+    # Store the average scores as csv files
+    avg_mixture_score = list((avg_mixture_score/frame_num).reshape(-1))
+    avg_baseline_score = list((avg_baseline_score/frame_num).reshape(-1))
+    avg_pw_score = list((avg_pw_score/frame_num).reshape(-1))
+    avg_pesq_score = list((avg_pesq_score/frame_num).reshape(-1))
+    avg_mixture_score.append(' ')
+    avg_baseline_score.append(' ')
+    avg_pw_score.append(' ')
+    avg_pesq_score.append(' ')
+    dataframe = pd.DataFrame({'':['SDR','SIR','SAR','PESQ',' '], 'mixture':avg_mixture_score,'baseline':avg_baseline_score,'percep_loss':avg_pw_score,'PESQ_loss':avg_pesq_score})
+    dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/average_' + 'Typing_noise_case_' + dB_exchange_dict[SNR] +'_measurement.csv', index=False, mode = 'a+', sep=',')
 
 
