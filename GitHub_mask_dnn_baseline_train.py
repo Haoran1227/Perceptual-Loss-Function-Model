@@ -58,7 +58,7 @@ fram_length = 129
 n1 = 1024 # DNN model parameters
 n2 = 512
 n3 = 512
-drop_out=0.2 # dropou rate
+drop_out=0.2 # dropout rate
 
 LOOK_BACKWARD = 2
 LOOK_FORWARD = 2
@@ -224,10 +224,10 @@ model.compile(optimizer=adam_wn, loss='mean_squared_error', metrics=['accuracy']
 #####################################################################################
 # 3. Fit the model
 #####################################################################################
-# Stop training after 16 epoches if the vali_loss not decreasing
-stop_str = cbs.EarlyStopping(monitor='val_loss', patience=16, verbose=1, mode='auto')
+# Stop training after 10 epoches if the vali_loss not decreasing
+stop_str = cbs.EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='auto')
 # Reduce learning rate when stop improving lr = lr*factor
-reduce_LR = cbs.ReduceLROnPlateau(monitor='val_loss', factor=0.6, patience=3, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+reduce_LR = cbs.ReduceLROnPlateau(monitor='val_loss', factor=0.6, patience=2, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 # Only save the best model
 best_weights = "./training results/mask_dnn_baseline_" + SNR_situ + "_weights.h5"
 best_weights = os.path.normcase(best_weights)
