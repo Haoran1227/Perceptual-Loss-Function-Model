@@ -80,7 +80,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     SNR_situ = SNR_situ_array[k_snr]
     noi_situ_model_str = "6snrs"
     filter_type_str = "AMR_direct_freqz"
-    fram_length = 129
+    fram_length = 257
     n1 = 1024
     n2 = 512
     n3 = 512
@@ -129,7 +129,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     d5 =Dropout(0.2)(d5)
 
     d6 =BatchNormalization()(d5)
-    mask= Dense(129,activation='sigmoid')(d6)
+    mask= Dense(257,activation='sigmoid')(d6)
 
     # Use the predicted mask to multiply the unnorm data
     decoded = Multiply()([mask, auxiliary_input])
