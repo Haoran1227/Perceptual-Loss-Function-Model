@@ -1,12 +1,12 @@
 %--------------------------------------------------------------------------
-% GitHubTrain_part_1_CleanAndNoisyData - Loading clean speech and
+% GitHubTrain_part_1_CleanAndNoisyMixture - Loading clean speech and
 % noise, generating mixture signal (noisy) with 6 SNRs, generating
 % frame-wise frequency amplitudes for clean and noisy speech. 
-% Note that the clean speech signals are from Grid corpous (downsampled to 
-% 16 kHz) dataset and noise signals are from ChiMe-3 dataset. 
+% Note that the clean speech signals are from Grid corpous dataset which 
+% sampling rate is 16khz. 
 %
 % Given data:
-%             Grid corpous (clean speech) and ChiMe-3 (noise) datasets.
+%             Grid corpous (clean speech) and noise datasets.
 %         
 % Output data:
 %             s_speech             : whole clean speech signal 
@@ -16,41 +16,43 @@
 %             mixture_fft_abs      : frequency amplitudes for noisy speech
 %                                    (for part 3 usage)
 %
-% 
-% Technische Universit盲t Braunschweig
+% Created by Ziyue Zhao
+% Technische Universit?t Braunschweig
 % Institute for Communications Technology (IfN)
-% Schleinitzstrasse 22
-% 38106 Braunschweig
-% Germany
 % 2019 - 05 - 23 
-% (c) Ziyue Zhao
 %
+% Modified by Haoran Zhao
+% Friedrich-Alexander-Universit?t Erlangen-Nürnberg
+% 2020 - 10 - 15
+
 % Use is permitted for any scientific purpose when citing the paper:
 % Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter 
 % Loss for DNN Training in Speech Enhancement", arXiv preprint arXiv: 
 % 1905.09754.
-%
+
 %--------------------------------------------------------------------------
 clear;
 addpath(genpath(pwd));
 % --- Settings 
 num_snr_mix = 6; % Number of the mixed SNRs 
 Fs = 16000;
-speech_length = 16*60*Fs;
+
+% This term determines how long the total training and validation speech is.
+% Here 11min training speech and 2min validation speech. Total 13min
+speech_length = 13*60*Fs;   
+
 % -- Set the noise levels:
 % -21 for -5 dB SNR, -26 for 0 dB SNR, -31 for 5dB SNR, -36 for 10dB SNR, 
 % -41 for 15dB SNR, -46 for 20dB SNR
 noi_lev_vec = -21:-5:-46; 
 % -- Frequency domain parameters
-fram_leng = 256; % window length
+fram_leng = 512; % window length
 fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 
 % --- Input directories
-database_dir = '.\Audio Data\grid corpus 16khz\';
-noise_dir_1 = '.\Audio Data\16khz noise\ped\BGD_150203_010_PED.CH1.wav'; % 6 mins
-noise_dir_2 = '.\Audio Data\16khz noise\street\BGD_150203_010_STR.CH1.wav';% 6 mins
-noise_dir_3 = '.\Audio Data\16khz noise\cafe\cafe1\BGD_150203_010_CAF.CH1.wav';% 6 mins
+database_dir = '.\Audio Data\training_and_validation_speech_16kHz\';
+noise_dir = '.\Audio Data\training_noise_16kHz.wav';
 
 % --- Output directories
 train_sspeech_dir = '.\train\speech_clean_s_speech.mat'; 
@@ -68,7 +70,7 @@ for i = 1:size(database_file,1)
 
     % -- read as .raw file 
     [speech_file_wav,fs] = audioread(in_file);  
-    speech_file = speech_file_wav(:,1).*(2^15);    %修改了，因为需要变成单通道
+    speech_file = speech_file_wav(:,1).*(2^15);
     speech_int16 = int16(speech_file);
 
     % -- normalize to -26 dBoV
@@ -95,49 +97,42 @@ for mm = 1:num1
     s1_speech(num_cal1-length(s1{1,mm})+1:num_cal1,1) = s1{1,mm};
 end
 
-% --- Truncate the speech into 16min
+% --- Truncate the speech into speech_length
 s1_speech = s1_speech(1:speech_length);
-
+audiowrite('./train/clean_speech.wav',s1_speech./max(abs(s1_speech)),Fs)
 % --- Copy 6 times for 6 SNRs 
 s_speech=[s1_speech;s1_speech;s1_speech;s1_speech;s1_speech;s1_speech];
 
-% % --- frame-wise FFT processing 
-% wd = hanning(fram_leng,'periodic');
-% num_frame = (floor(length(s1_speech)*num_snr_mix/fram_shift)-1);
-% speech_fft_abs_clean = zeros(freq_coeff_leng,num_frame);
-% clear s1 speech_file_wav speech_file speech_file speech_scaled_int16 speech_int16 speech_scaled
-% for jj=1:num_frame
-%     % -- Get frequency amplitude
-%     speech_wd = s_speech(1+fram_shift*(jj-1):fram_leng+fram_shift*(jj-1),1).*wd;  
-%     speech_fft = fft(speech_wd); % FFT for the clear speech
-%     fft_abs = abs(speech_fft); % get the amplitude spectrogram
-%     speech_fft_abs_clean(:,jj) = fft_abs(1:freq_coeff_leng);
-%     % -- Display progress
-%     if mod(jj,10000) == 0,
-%         disp(['Percentage of frames finished (FFT): ' num2str( (jj/num_frame)* 100) '%']);
-%     end
-% end
-% 
-% % --- Save the clean speech frequency amplitude (129 coeff. from 256 FFT points)
-% save(train_clean_dir,'speech_fft_abs_clean','-v7.3')
-% save(train_sspeech_dir,'s_speech','-v7.3');
-% clear s_speech
-% 
+% --- frame-wise FFT processing 
+wd = hanning(fram_leng,'periodic');
+num_frame = (floor(length(s1_speech)*num_snr_mix/fram_shift)-1);
+speech_fft_abs_clean = zeros(freq_coeff_leng,num_frame);
+clear s1 speech_file_wav speech_file speech_file speech_scaled_int16 speech_int16 speech_scaled
+for jj=1:num_frame
+    % -- Get frequency amplitude
+    speech_wd = s_speech(1+fram_shift*(jj-1):fram_leng+fram_shift*(jj-1),1).*wd;  
+    speech_fft = fft(speech_wd); % FFT for the clear speech
+    fft_abs = abs(speech_fft); % get the amplitude spectrogram
+    speech_fft_abs_clean(:,jj) = fft_abs(1:freq_coeff_leng);
+    % -- Display progress
+    if mod(jj,10000) == 0,
+        disp(['Percentage of frames finished (FFT): ' num2str( (jj/num_frame)* 100) '%']);
+    end
+end
+
+% --- Save the clean speech frequency amplitude (129 coeff. from 256 FFT points)
+save(train_clean_dir,'speech_fft_abs_clean','-v7.3')
+save(train_sspeech_dir,'s_speech','-v7.3');
+clear s_speech
+
 %% Read noise and produce frequency amplitudes for mixture
 % --- read noise
-[noise_wav1,~]=audioread(noise_dir_1); 
-[noise_wav2,~]=audioread(noise_dir_2); 
-[noise_wav3,~]=audioread(noise_dir_3); 
-noise_raw1=noise_wav1.*(2^15); % transfer to raw file
-noise_raw2=noise_wav2.*(2^15); 
-noise_raw3=noise_wav3.*(2^15); 
+[noise_wav,~]=audioread(noise_dir); 
+noise_raw=noise_wav.*(2^15); % transfer to raw file
 
-% --- Concatenate all 6 noise files to one vector and trim 
-noise_raw_all = [noise_raw1(1:60*Fs);noise_raw2(1:60*Fs);noise_raw3(1:60*Fs);noise_raw1(60*Fs+1:end);noise_raw2(60*Fs+1:end);noise_raw3(60*Fs+1:end)]; % 18 mins (enough for 17.65 mins, i.e., clean speech duration )
-noise_raw = noise_raw_all(1:speech_length,1); % 16 speakers, 100 files, 3 sec.
+% --- Trim the noise to the same length with the speech
+noise_raw = noise_raw(1:speech_length,1);
 noise_int16 = int16(noise_raw);
-clear noise_wav1 noise_wav2 noise_wav3 noise_raw_all
-clear noise_raw1 noise_raw2 noise_raw3 
 
 % --- Adjust the noise level according to the set SNR
 noise = cell(1,1);
@@ -148,7 +143,6 @@ for act_n = noi_lev_vec
     [~, ~, gain_noise] = actlev(noise_contr, noise_int16);
     noise_int16_scale = noise_int16.*gain_noise;
     noise_scale = double(noise_int16_scale);
-    % [act_lev1, rms_lev1, gain1] = actlev('-sf 16000 -lev -26',int16(noise_scale));
     noise{num_n} = noise_scale;
 end
 clear noise_raw noise_int16 speech_scaled noise_int16_scale
@@ -176,27 +170,27 @@ for mm = 1:num_n
 end
 l_mix=num_element2;
 clear mixed_speech_cell 
-audiowrite('./train/mixture_signal.wav',mixed_speech(:,1)./(2^15),Fs)
-% % --- FFT processing
-% wd = hanning(fram_leng,'periodic');
-% l_process = floor(l_mix/fram_shift)-1;
-% mixture_fft_abs = zeros(freq_coeff_leng,l_process);
-% for jj = 1:l_process
-%     speech_wd = mixed_speech(1+fram_shift*(jj-1):fram_leng+fram_shift*(jj-1),1).*wd;  %segment the clear speech using hanning window
-%     speech_fft = fft(speech_wd); % FFT for the noisy speech
-%     fft_abs = abs(speech_fft); % get the amplitude spectrogram
-%     mixture_fft_abs(:,jj) = fft_abs(1:freq_coeff_leng);
-%     % -- Display progress
-%     if mod(jj,10000) == 0,
-%         disp(['Percentage of frames finished: ' num2str( (jj/l_process)* 100) '%']);
-%     end
-% end
-% 
-% % --- Save mixture
-% save(train_mixture_dir,'mixture_fft_abs','-v7.3')
-% 
-% 
-% 
-% 
-% 
-% 
+audiowrite('./train/mixture_signal.wav',mixed_speech./max(abs(mixed_speech)),Fs)
+%--- FFT processing
+wd = hanning(fram_leng,'periodic');
+l_process = floor(l_mix/fram_shift)-1;
+mixture_fft_abs = zeros(freq_coeff_leng,l_process);
+for jj = 1:l_process
+    speech_wd = mixed_speech(1+fram_shift*(jj-1):fram_leng+fram_shift*(jj-1),1).*wd;  %segment the clear speech using hanning window
+    speech_fft = fft(speech_wd); % FFT for the noisy speech
+    fft_abs = abs(speech_fft); % get the amplitude spectrogram
+    mixture_fft_abs(:,jj) = fft_abs(1:freq_coeff_leng);
+    % -- Display progress
+    if mod(jj,10000) == 0,
+        disp(['Percentage of frames finished: ' num2str( (jj/l_process)* 100) '%']);
+    end
+end
+
+% --- Save mixture
+save(train_mixture_dir,'mixture_fft_abs','-v7.3')
+
+
+
+
+
+

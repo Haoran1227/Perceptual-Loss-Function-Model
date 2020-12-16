@@ -1,8 +1,8 @@
 %--------------------------------------------------------------------------
 % GitHubTrain_part_3_TrainValidDataPrepare - Loading data from part 1 and 2
 % and generate the final training/validation data. 
-% Note that the clean speech signals are from Grid corpous (downsampled to 
-% 16 kHz) dataset and noise signals are from ChiMe-3 dataset. 
+% Note that the clean speech signals are from Grid corpous (sampling rate 
+% 16kHz) dataset. 
 %
 % Given data:
 %             h_fft_abs_half_mat   : the matrix contains frame-wise 
@@ -22,18 +22,19 @@
 %             validation_input_unnorm_6snrs : validation auxiliary input
 %             training_target_6snrs         : training target
 %             validation_target_6snrs       : validation target
-%             ( Note that the above data dimension is num_frame X 129 )
+%             ( Note that the above data dimension is num_frame X 257 )
 %             mean_training_6snrs, std_training_6snrs : training data
 %             statistics
 %
 % 
-% Technische Universität Braunschweig
+% Created by Ziyue Zhao
+% Technische Universit?t Braunschweig
 % Institute for Communications Technology (IfN)
-% Schleinitzstrasse 22
-% 38106 Braunschweig
-% Germany
 % 2019 - 05 - 23 
-% (c) Ziyue Zhao
+%
+% Modified by Haoran Zhao
+% Friedrich-Alexander-Universit?t Erlangen-N¨¹rnberg
+% 2020 - 10 - 15
 %
 % Use is permitted for any scientific purpose when citing the paper:
 % Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter 
@@ -47,11 +48,11 @@ addpath(genpath(pwd));
 % --- Settings
 Fs = 16000;
 num_snr_mix = 6; % Number of the mixed SNRs
-speech_length = 16*60*Fs;   %length of speech signal 16min
-valid_rate = 0.2; % the rate of: validation data / whole data
-test_rate = 0.2; % the rate of: validation data / whole data
+speech_length = 13*60*Fs;   %length of speech signal is 13min      %tunning parameter
+valid_rate = 2/13; % the rate of: validation data / whole data      %tunning parameter
+
 % -- Frequency domain parameters
-fram_leng = 256; % window length
+fram_leng = 512; % window length
 fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 

@@ -38,8 +38,8 @@ addpath(genpath(pwd));
 Fs = 16000;
 gamma2 = 0.6;  % weighting filter factors: gamma1 and gamma2
 gamma1 = 0.92; % possible gamma1, e.g., 0.9, 0.92, 0.94, 0.96, etc.
-Np = 16;
-fram_leng = 256;
+Np = 16;    % linear prediction depend on previous Np samples
+fram_leng = 512;
 fram_shift = fram_leng/2; % frame shift
 Lplus = 0;
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
