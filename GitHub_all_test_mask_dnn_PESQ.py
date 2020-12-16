@@ -72,7 +72,7 @@ def reshapeDataMatrix(data_matrix, look_backward=1, look_forward=2):
 # 0. Settings
 #####################################################################################
 # Some settings related to pmsqe loss
-pmsqe.init_constants(Fs=8000,
+pmsqe.init_constants(Fs=16000,
                          Pow_factor=pmsqe.perceptual_constants.Pow_correc_factor_SqHann,
                          apply_SLL_equalization=True,
                          apply_bark_equalization=True,
@@ -107,7 +107,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     # Settings
     SNR_situ = SNR_situ_array[k_snr]
     noi_situ_model_str = "6snrs"
-    fram_length = 129
+    fram_length = 257
     n1 = 1024
     n2 = 512
     n3 = 512
@@ -154,7 +154,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     d5 = Dropout(0.2)(d5)
 
     d6 = BatchNormalization()(d5)
-    mask = Dense(129, activation='sigmoid')(d6)
+    mask = Dense(257, activation='sigmoid')(d6)
 
     # Use the predicted mask to multiply the unnorm data
     decoded = Multiply()([mask, auxiliary_input])
@@ -168,7 +168,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     # Settings
     nb_epochs = 100
     batch_size = 128
-    learning_rate = 5e-4
+    learning_rate = 1e-4
     adam_wn = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(optimizer=adam_wn, loss=PESQ_Loss, metrics=['accuracy'])
     model.load_weights("./training results/mask_dnn_PESQ_" + noi_situ_model_str + "_weights.h5")
