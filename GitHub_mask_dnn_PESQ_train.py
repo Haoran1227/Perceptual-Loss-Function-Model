@@ -252,7 +252,7 @@ model.summary()
 # Training settings
 nb_epochs = 100
 batch_size = 128
-learning_rate = 1e-4
+learning_rate = 1e-5
 adam_wn = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 model.compile(optimizer=adam_wn, loss=PESQ_Loss, metrics=['accuracy'])
 
