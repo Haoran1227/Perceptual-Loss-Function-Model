@@ -59,7 +59,7 @@ from keras.constraints import maxnorm
 # 0. Settings
 #####################################################################################
 SNR_situ = "6snrs"
-fram_length = 257
+fram_length = 129
 n1 = 1024 # DNN model parameters
 n2 = 512
 n3 = 512
@@ -180,17 +180,16 @@ print('> Data Loaded. Compiling...')
 def log_power_MSE_loss(y_true, y_pred):
     # y_true and y_pred are amplitude spectrum.
     # Calculate the log spectrum
-    log_spec_true = K.log(K.abs(y_true)+K.epsilon())
-    log_spec_pred = K.log(K.abs(y_pred)+K.epsilon())
+    log_spec_true = K.log(K.abs(y_true) + K.epsilon())
+    log_spec_pred = K.log(K.abs(y_pred) + K.epsilon())
     # Mean and variance normalization (over the frequency axis)
-    mean_vector = K.mean(log_spec_true,axis=0)
-    std_vector = K.std(log_spec_true,axis=0)
+    mean_vector = K.mean(log_spec_true, axis=0)
+    std_vector = K.std(log_spec_true, axis=0)
 
     # Normalization and calculation of the mse_loss
-    normed_log_spec_true = (log_spec_true - mean_vector) / (std_vector + K.epsilon())
-    normed_log_spec_pred = (log_spec_pred - mean_vector) / (std_vector + K.epsilon())
-    mse_loss = K.mean(K.square(normed_log_spec_pred-normed_log_spec_true),axis = -1)
-
+    normed_log_spec_true = (log_spec_true - mean_vector) / std_vector
+    normed_log_spec_pred = (log_spec_pred - mean_vector) / std_vector
+    mse_loss = K.mean(K.square(normed_log_spec_pred - normed_log_spec_true), axis=-1)
     return K.mean(mse_loss)
 
 input_img = Input(shape=(INPUT_SHAPE))
@@ -225,7 +224,7 @@ d5 = LeakyReLU(0.2)(d5)
 d5 =Dropout(0.2)(d5)
 
 d6 = BatchNormalization()(d5)
-mask= Dense(257,activation='sigmoid')(d6)
+mask= Dense(129,activation='sigmoid')(d6)
 
 # Use the predicted mask to multiply the unnorm data
 decoded= Multiply()([mask,auxiliary_input])
@@ -239,7 +238,7 @@ model.summary()
 # Training settings
 nb_epochs = 100
 batch_size = 128
-learning_rate = 1e-5
+learning_rate = 5e-5
 adam_wn = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 model.compile(optimizer=adam_wn, loss=log_power_MSE_loss, metrics=['accuracy'])
 

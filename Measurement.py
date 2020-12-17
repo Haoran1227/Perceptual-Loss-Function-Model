@@ -100,6 +100,7 @@ for SNR in SNR_situ_array:
     s_hat_baseline_dir= database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_baseline' + '.mat'
     s_hat_pw_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_weight_filter_AMR_direct_freqz' + '.mat'
     s_hat_pesq_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_PESQ' + '.mat'
+    s_hat_log_power_dir = database_dir + SNR + '/s_hat_test_data_snr_' + SNR + '_model_6snrs_log_power_MSE' + '.mat'
 
     # Load data
     mixture_tmp = sio.loadmat(os.path.normcase(mixture_dir))
@@ -112,15 +113,18 @@ for SNR in SNR_situ_array:
     s_hat_pw = s_hat_pw_tmp['s_hat_temp']
     s_hat_pesq_tmp = sio.loadmat(os.path.normcase(s_hat_pesq_dir))
     s_hat_pesq = s_hat_pesq_tmp['s_hat_temp']
+    s_hat_log_power_tmp = sio.loadmat(os.path.normcase(s_hat_log_power_dir))
+    s_hat_log_power = s_hat_log_power_tmp['s_hat_temp']
 
     # Calculate measurements
     data_length = len(reference[0])
     frame_num = data_length//(pesq_window*Fs)
-    print(data_length)
+
     avg_mixture_score=np.zeros((1,4))
     avg_baseline_score=np.zeros((1,4))
     avg_pw_score = np.zeros((1, 4))
     avg_pesq_score = np.zeros((1, 4))
+    avg_log_power_score = np.zeros((1, 4))
     for i in range(frame_num):       # calculate pesq per pesq window (30 seconds)
         _, mixture_score = quality_eval_one_audio(mixture[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
                                              reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
@@ -130,38 +134,47 @@ for SNR in SNR_situ_array:
                                              reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
         _, pesq_score = quality_eval_one_audio(s_hat_pesq[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
                                                    reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
+        _, log_power_score = quality_eval_one_audio(s_hat_log_power[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs],
+                                                    reference[:, i * pesq_window * Fs:(i + 1) * pesq_window * Fs])
 
         # Help to calculate the average score
         avg_mixture_score += mixture_score
         avg_baseline_score += baseline_score
         avg_pw_score += pw_score
         avg_pesq_score += pesq_score
+        avg_log_power_score += log_power_score
 
         # Store the segmental scores as csv files
         mixture_score = list(mixture_score.reshape(-1))
         baseline_score = list(baseline_score.reshape(-1))
         pw_score = list(pw_score.reshape(-1))
         pesq_score = list(pesq_score.reshape(-1))
+        log_power_score = list(log_power_score.reshape(-1))
+
         mixture_score.append(' ')
         baseline_score.append(' ')
         pw_score.append(' ')
         pesq_score.append(' ')
+        log_power_score.append(' ')
+
         dataframe = pd.DataFrame(
-            {'': ['SDR', 'SIR', 'SAR', 'PESQ', ' '], 'mixture': mixture_score, 'baseline': baseline_score,
+            {'': ['SDR', 'SIR', 'SAR', 'PESQ', ' '], 'mixture': mixture_score, 'baseline': baseline_score, 'log_power':log_power_score,
              'percep_loss': pw_score, 'PESQ_loss': pesq_score})
-        dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Thunder_noise_case_' + dB_exchange_dict[
-            SNR] + '_measurement.csv', index=False, mode='a+', sep=',')
+        dataframe.to_csv('./measurements/' + 'Ego_noise_case_' + dB_exchange_dict[SNR] + '_measurement.csv', index=False, mode='a+', sep=',')
 
     # Store the average scores as csv files
     avg_mixture_score = list((avg_mixture_score/frame_num).reshape(-1))
     avg_baseline_score = list((avg_baseline_score/frame_num).reshape(-1))
     avg_pw_score = list((avg_pw_score/frame_num).reshape(-1))
     avg_pesq_score = list((avg_pesq_score/frame_num).reshape(-1))
+    avg_log_power_score = list((avg_log_power_score / frame_num).reshape(-1))
+
     avg_mixture_score.append(' ')
     avg_baseline_score.append(' ')
     avg_pw_score.append(' ')
     avg_pesq_score.append(' ')
-    dataframe = pd.DataFrame({'':['SDR','SIR','SAR','PESQ',' '], 'mixture':avg_mixture_score,'baseline':avg_baseline_score,'percep_loss':avg_pw_score,'PESQ_loss':avg_pesq_score})
-    dataframe.to_csv('./measurements/' + dB_exchange_dict[SNR] + '/' + 'Thunder_noise_case_' + dB_exchange_dict[SNR] +'_average_measurement.csv', index=False, mode = 'a+', sep=',')
+    avg_log_power_score.append(' ')
 
+    dataframe = pd.DataFrame({'':['SDR','SIR','SAR','PESQ',' '], 'mixture':avg_mixture_score,'baseline':avg_baseline_score,'log_power':avg_log_power_score,'percep_loss':avg_pw_score,'PESQ_loss':avg_pesq_score})
+    dataframe.to_csv('./measurements/' + 'Ego_noise_case_' + dB_exchange_dict[SNR] +'_average_measurement.csv', index=False, mode = 'a+', sep=',')
 

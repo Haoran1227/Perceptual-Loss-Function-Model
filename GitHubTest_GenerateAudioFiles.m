@@ -2,32 +2,32 @@
 % GitHubTest_GenerateAudioFiles - Loading DNN inferenced data and   
 % reconstruct to the waveform of speech signals for white- and black-box 
 % measurement.
-% Note that the clean speech signals are from Grid corpous (sampling rate 
-% 16kHz) dataset.
-% 
+% Note that the clean speech signals are from Grid corpous (downsampled to
+% 8 kHz) dataset.
+%
 % Given data:
 %             Grid corpous (clean speech) and ChiMe-3 (noise) datasets.
 %             test_s_hat                : masked noisy speech
 %             test_s_tilt               : masked clean speech
 %             test_n_tilt               : masked noise
-%             y_phase, s_phase, n_phase : phase information 
-%         
+%             y_phase, s_phase, n_phase : phase information
+%
 % Output data:
 %             All speech waveforms can be choosen to be saved or not.
 %
-% 
+%
 % Created by Ziyue Zhao
 % Technische Universit?t Braunschweig
 % Institute for Communications Technology (IfN)
-% 2019 - 05 - 23 
+% 2019 - 05 - 23
 %
 % Modified by Haoran Zhao
-% Friedrich-Alexander-Universit?t Erlangen-N¨¹rnberg
+% Friedrich-Alexander-Universit?t Erlangen-Nï¿½ï¿½rnberg
 % 2020 - 10 - 15
 %
 % Use is permitted for any scientific purpose when citing the paper:
-% Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter 
-% Loss for DNN Training in Speech Enhancement", arXiv preprint arXiv: 
+% Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter
+% Loss for DNN Training in Speech Enhancement", arXiv preprint arXiv:
 % 1905.09754.
 %
 %--------------------------------------------------------------------------
@@ -36,39 +36,39 @@ clear;
 addpath(genpath(pwd));
 % --- Settings
 % --- Set the noise levels:
-% -21 for -5 dB SNR, -26 for 0 dB SNR, -31 for 5dB SNR, -36 for 10dB SNR, 
+% -21 for -5 dB SNR, -26 for 0 dB SNR, -31 for 5dB SNR, -36 for 10dB SNR,
 % -41 for 15dB SNR, -46 for 20dB SNR
 noi_lev_vec = {-21,-26,-31,-36,-41,-46};
-save_files_flag = 1; % 1- Save all generated files; 0- Not save 
+save_files_flag = 1; % 1- Save all generated files; 0- Not save
 modle_type_str_vec = {'baseline','log_power_MSE','weight_filter_AMR_direct_freqz','PESQ'}; % run all models to compare
-noi_situ_model_str = '6snrs'; 
-Fs = 16000;
+noi_situ_model_str = '6snrs';
+Fs = 8000;
 speech_length = 120*Fs;  % test speech length which can be tuned. Here, 120s.
 
 % -- Frequency domain parameters
-fram_leng = 512; % window length
+fram_leng = 256; % window length
 fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 
-% --- Directories 
-database_dir = '.\Audio Data\test_speech_16kHz\';
-noi_file_name = '.\Audio Data\test_noise_16kHz.wav';
+% --- Directories
+database_dir = '.\Audio Data\test_speech_8kHz\';
+noi_file_name = '.\Audio Data\test_noise_8kHz.wav';
 
-% --- Loop for loading clean speech 
+% --- Loop for loading clean speech
 s1 = cell(1,1);
 num1 = 0;
 database_file = dir([database_dir '\*.wav']);
 for i = 1:size(database_file,1)
     in_file = [database_dir database_file(i).name];
-    fprintf('  %s --> \n', in_file); 
+    fprintf('  %s --> \n', in_file);
 
-    % -- read as .raw file 
-    [speech_file_wav,fs] = audioread(in_file);  
+    % -- read as .raw file
+    [speech_file_wav,fs] = audioread(in_file);
     speech_file = speech_file_wav(:,1).*(2^15);
     speech_int16 = int16(speech_file);
 
     % -- normalize to -26 dBoV
-    [act_lev_speech, rms_lev_speech, gain_speech] = actlev('-sf 16000 -lev -26', speech_int16);
+    [act_lev_speech, rms_lev_speech, gain_speech] = actlev('-sf 8000 -lev -26', speech_int16);
     speech_scaled_int16 = speech_int16 * gain_speech;
     speech_scaled = double(speech_scaled_int16);
 
@@ -97,7 +97,7 @@ s_vec = s1_speech(1:speech_length);
 % --- Load noise files
 [noi_test_wav,~] = audioread(noi_file_name);
 noi_test_wav = noi_test_wav .* 2^15;
-    
+
 % --- Trim to same length as s_vec: n_vec
 n_vec = noi_test_wav(1:speech_length);
 n_vec = int16(n_vec);
@@ -105,7 +105,7 @@ n_vec = int16(n_vec);
 for noi_lev_num = 1 : length(noi_lev_vec)
     noi_lev = noi_lev_vec{noi_lev_num};
     % --- Make the noise level according to the set SNR
-    noise_contr = ['-sf 16000 -lev ' num2str(noi_lev) ' -rms'];
+    noise_contr = ['-sf 8000 -lev ' num2str(noi_lev) ' -rms'];
     [~, ~, gain_noise] = actlev(noise_contr, n_vec);
     n_vec_scale = n_vec .* gain_noise;
     n_vec_scale = double(n_vec_scale);
@@ -202,9 +202,9 @@ for noi_lev_num = 1 : length(noi_lev_vec)
             save(['./generated_files/' num2str(noi_lev) '/y_test_data_snr_' num2str(noi_lev) '.mat'],'y_vec_temp');
             save(['./generated_files/' num2str(noi_lev) '/s' '.mat'],'s_vec_temp');
             save(['./generated_files/' num2str(noi_lev) '/n_test_data_snr_' num2str(noi_lev) '.mat'],'n_vec_temp');
-            audiowrite(['./generated_files/' num2str(noi_lev) '/clean_speech.wav'],s_vec_temp./max(abs(s_vec_temp),[],2),Fs);
-            audiowrite(['./generated_files/' num2str(noi_lev) '/s_hat_test_data_snr_' num2str(noi_lev) '_model_' noi_situ_model_str '_' modle_type_str '.wav'],s_hat_temp./(2*max(abs(s_hat_temp),[],2)),Fs);
-            audiowrite(['./generated_files/' num2str(noi_lev) '/y_test_data_snr_' num2str(noi_lev) '.wav'],y_vec_temp./max(abs(y_vec_temp),[],2),Fs);
+
+            audiowrite(['./generated_wavs/' num2str(-noi_lev-26) 'dB_s_hat_enhanced_model_' modle_type_str '.wav'],s_hat_temp./(2*max(abs(s_hat_temp),[],2)),Fs);
+            audiowrite(['./generated_wavs/' num2str(-noi_lev-26) 'dB_y_mixture.wav'],y_vec_temp./max(abs(y_vec_temp),[],2),Fs);
         end
 
         % -- Possible white- and black-box measurements here ...

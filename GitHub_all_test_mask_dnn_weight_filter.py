@@ -80,7 +80,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     SNR_situ = SNR_situ_array[k_snr]
     noi_situ_model_str = "6snrs"
     filter_type_str = "AMR_direct_freqz"
-    fram_length = 257
+    fram_length = 129
     n1 = 1024
     n2 = 512
     n3 = 512
@@ -129,7 +129,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     d5 =Dropout(0.2)(d5)
 
     d6 =BatchNormalization()(d5)
-    mask= Dense(257,activation='sigmoid')(d6)
+    mask= Dense(129,activation='sigmoid')(d6)
 
     # Use the predicted mask to multiply the unnorm data
     decoded = Multiply()([mask, auxiliary_input])
@@ -206,19 +206,16 @@ for k_snr in range(0, len(SNR_situ_array)):
     # 3. predict model and save results
     #####################################################################################
     predicted_s_hat = model.predict([x_test_y_norm,x_test_y,x_test_h_ones,x_test_wfac_ones])
-    print(predicted_s_hat.shape)
     recon_file = "./test results/mask_dnn_weight_filter_" + filter_type_str + "_s_hat_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_s_hat':predicted_s_hat})
 
     predicted_s_tilt = model.predict([x_test_y_norm,x_test_s,x_test_h_ones,x_test_wfac_ones])
-    print(predicted_s_tilt.shape)
     recon_file = "./test results/mask_dnn_weight_filter_" + filter_type_str + "_s_tilt_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_s_tilt':predicted_s_tilt})
 
     predicted_n_tilt = model.predict([x_test_y_norm,x_test_n,x_test_h_ones,x_test_wfac_ones])
-    print(predicted_n_tilt.shape)
     recon_file = "./test results/mask_dnn_weight_filter_" + filter_type_str + "_n_tilt_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_n_tilt':predicted_n_tilt})

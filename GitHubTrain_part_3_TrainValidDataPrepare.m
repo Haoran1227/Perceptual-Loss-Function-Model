@@ -1,20 +1,20 @@
 %--------------------------------------------------------------------------
 % GitHubTrain_part_3_TrainValidDataPrepare - Loading data from part 1 and 2
 % and generate the final training/validation data. 
-% Note that the clean speech signals are from Grid corpous (sampling rate 
-% 16kHz) dataset. 
+% Note that the clean speech signals are from Grid corpous (downsampled to
+% 8 kHz) dataset.
 %
 % Given data:
-%             h_fft_abs_half_mat   : the matrix contains frame-wise 
-%                                    weighting filter amplitude response, 
-%                                    with the dimension as: (half-plus-one  
+%             h_fft_abs_half_mat   : the matrix contains frame-wise
+%                                    weighting filter amplitude response,
+%                                    with the dimension as: (half-plus-one
 %                                    frequency bins, num. of frames)
-%                                    (from part 2) 
+%                                    (from part 2)
 %             speech_fft_abs_clean : frequency amplitudes for clean speech
 %                                    (from part 1)
 %             mixture_fft_abs      : frequency amplitudes for noisy speech
 %                                    (from part 1)
-%         
+%
 % Output data:
 %             training_input_6snrs          : training input
 %             validation_input_6snrs        : validation input
@@ -22,23 +22,23 @@
 %             validation_input_unnorm_6snrs : validation auxiliary input
 %             training_target_6snrs         : training target
 %             validation_target_6snrs       : validation target
-%             ( Note that the above data dimension is num_frame X 257 )
+%             ( Note that the above data dimension is num_frame X 129 )
 %             mean_training_6snrs, std_training_6snrs : training data
 %             statistics
 %
-% 
+%
 % Created by Ziyue Zhao
 % Technische Universit?t Braunschweig
 % Institute for Communications Technology (IfN)
-% 2019 - 05 - 23 
+% 2019 - 05 - 23
 %
 % Modified by Haoran Zhao
-% Friedrich-Alexander-Universit?t Erlangen-N¨¹rnberg
+% Friedrich-Alexander-Universit?t Erlangen-Nï¿½ï¿½rnberg
 % 2020 - 10 - 15
 %
 % Use is permitted for any scientific purpose when citing the paper:
-% Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter 
-% Loss for DNN Training in Speech Enhancement", arXiv preprint arXiv: 
+% Z. Zhao, S. Elshamy, and T. Fingscheidt, "A Perceptual Weighting Filter
+% Loss for DNN Training in Speech Enhancement", arXiv preprint arXiv:
 % 1905.09754.
 %
 %--------------------------------------------------------------------------
@@ -46,13 +46,13 @@
 clear;
 addpath(genpath(pwd));
 % --- Settings
-Fs = 16000;
+Fs = 8000;
 num_snr_mix = 6; % Number of the mixed SNRs
 speech_length = 13*60*Fs;   %length of speech signal is 13min      %tunning parameter
 valid_rate = 2/13; % the rate of: validation data / whole data      %tunning parameter
 
 % -- Frequency domain parameters
-fram_leng = 512; % window length
+fram_leng = 256; % window length
 fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 

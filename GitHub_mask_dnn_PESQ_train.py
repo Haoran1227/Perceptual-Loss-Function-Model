@@ -59,7 +59,7 @@ import pmsqe
 # 0. Settings
 #####################################################################################
 SNR_situ = "6snrs"
-fram_length = 257
+fram_length = 129
 n1 = 1024 # DNN model parameters
 n2 = 512
 n3 = 512
@@ -71,7 +71,7 @@ INPUT_SHAPE = (fram_length*(LOOK_BACKWARD + 1 + LOOK_FORWARD),)
 INPUT_SHAPE2 = (fram_length,)
 
 # Initialize the parameters which are needed in PMSQE function
-pmsqe.init_constants(Fs=16000,
+pmsqe.init_constants(Fs=8000,
                          Pow_factor=pmsqe.perceptual_constants.Pow_correc_factor_SqHann,
                          apply_SLL_equalization=True,
                          apply_bark_equalization=True,
@@ -195,8 +195,8 @@ def PESQ_Loss(y_true, y_pred):
     std_vector = K.std(log_spec_true,axis=0)
 
     # Normalization and calculation of the mse_loss
-    normed_log_spec_true = (log_spec_true - mean_vector) / (std_vector + K.epsilon())
-    normed_log_spec_pred = (log_spec_pred - mean_vector) / (std_vector + K.epsilon())
+    normed_log_spec_true = (log_spec_true - mean_vector) / std_vector
+    normed_log_spec_pred = (log_spec_pred - mean_vector) / std_vector
     mse_loss = K.mean(K.square(normed_log_spec_pred-normed_log_spec_true),axis = -1)
 
     # Calculate the power spectrum so that pmsqe_loss is obtained
@@ -238,7 +238,7 @@ d5 = LeakyReLU(0.2)(d5)
 d5 =Dropout(0.2)(d5)
 
 d6 = BatchNormalization()(d5)
-mask= Dense(257,activation='sigmoid')(d6)
+mask= Dense(129,activation='sigmoid')(d6)
 
 # Use the predicted mask to multiply the unnorm data
 decoded= Multiply()([mask,auxiliary_input])
@@ -252,7 +252,7 @@ model.summary()
 # Training settings
 nb_epochs = 100
 batch_size = 128
-learning_rate = 1e-5
+learning_rate = 5e-5
 adam_wn = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 model.compile(optimizer=adam_wn, loss=PESQ_Loss, metrics=['accuracy'])
 

@@ -56,7 +56,7 @@ from keras.constraints import maxnorm
 #####################################################################################
 filter_type_str = "AMR_direct_freqz"
 SNR_situ = "6snrs"
-fram_length = 257
+fram_length = 129
 n1 = 1024 # DNN model parameters
 n2 = 512
 n3 = 512
@@ -226,7 +226,7 @@ d5 = LeakyReLU(0.2)(d5)
 d5 = Dropout(0.2)(d5)
 
 d6 = BatchNormalization()(d5)
-mask= Dense(257,activation='sigmoid')(d6)
+mask= Dense(129,activation='sigmoid')(d6)
 
 # Use the predicted mask to multiply the unnorm data
 decoded= Multiply()([mask,auxiliary_input])

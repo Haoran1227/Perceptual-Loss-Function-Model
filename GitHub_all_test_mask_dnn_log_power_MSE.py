@@ -79,7 +79,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     # Settings
     SNR_situ = SNR_situ_array[k_snr]
     noi_situ_model_str = "6snrs"
-    fram_length = 257
+    fram_length = 129
     n1 = 1024
     n2 = 512
     n3 = 512
@@ -98,8 +98,8 @@ for k_snr in range(0, len(SNR_situ_array)):
     def log_power_MSE_loss(y_true, y_pred):
         # y_true and y_pred are amplitude spectrum.
         # Calculate the log spectrum
-        log_spec_true = K.log(K.abs(y_true))
-        log_spec_pred = K.log(K.abs(y_pred))
+        log_spec_true = K.log(K.abs(y_true) + K.epsilon())
+        log_spec_pred = K.log(K.abs(y_pred) + K.epsilon())
         # Mean and variance normalization (over the frequency axis)
         mean_vector = K.mean(log_spec_true, axis=0)
         std_vector = K.std(log_spec_true, axis=0)
@@ -108,7 +108,6 @@ for k_snr in range(0, len(SNR_situ_array)):
         normed_log_spec_true = (log_spec_true - mean_vector) / std_vector
         normed_log_spec_pred = (log_spec_pred - mean_vector) / std_vector
         mse_loss = K.mean(K.square(normed_log_spec_pred - normed_log_spec_true), axis=-1)
-
         return K.mean(mse_loss)
 
     input_img = Input(shape=(INPUT_SHAPE))
@@ -143,7 +142,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     d5 =Dropout(0.2)(d5)
 
     d6 =BatchNormalization()(d5)
-    mask= Dense(257,activation='sigmoid')(d6)
+    mask= Dense(129,activation='sigmoid')(d6)
 
     decoded= Multiply()([mask,auxiliary_input])
 
@@ -156,7 +155,7 @@ for k_snr in range(0, len(SNR_situ_array)):
     # Settings
     nb_epochs = 100
     batch_size = 128
-    learning_rate = 1e-5
+    learning_rate = 5e-5
     adam_wn = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(optimizer=adam_wn, loss=log_power_MSE_loss, metrics=['accuracy'])
     model.load_weights("./training results/mask_dnn_log_power_MSE_" + noi_situ_model_str + "_weights.h5")
@@ -213,19 +212,16 @@ for k_snr in range(0, len(SNR_situ_array)):
     # 3. predict model and save results
     #####################################################################################
     predicted_s_hat = model.predict([x_test_y_norm,x_test_y,x_test_wfac_ones])
-    print(predicted_s_hat.shape)
     recon_file = "./test results/mask_dnn_log_power_MSE_s_hat_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_s_hat':predicted_s_hat})
 
     predicted_s_tilt = model.predict([x_test_y_norm,x_test_s,x_test_wfac_ones])
-    print(predicted_s_tilt.shape)
     recon_file = "./test results/mask_dnn_log_power_MSE_s_tilt_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_s_tilt':predicted_s_tilt})
 
     predicted_n_tilt = model.predict([x_test_y_norm,x_test_n,x_test_wfac_ones])
-    print(predicted_n_tilt.shape)
     recon_file = "./test results/mask_dnn_log_power_MSE_n_tilt_snr_" + SNR_situ + "_model_" + noi_situ_model_str + "_test_data.mat"
     recon_file = os.path.normcase(recon_file)
     sio.savemat(recon_file, {'test_n_tilt':predicted_n_tilt})
