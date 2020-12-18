@@ -51,8 +51,8 @@ fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 
 % --- Directories
-database_dir = '.\Audio Data\test_speech_8kHz\';
-noi_file_name = '.\Audio Data\test_noise_8kHz.wav';
+database_dir = '.\Audio Data\test_speech\';
+noi_file_name = '.\Audio Data\test_noise.wav';
 
 % --- Loop for loading clean speech
 s1 = cell(1,1);
@@ -64,6 +64,9 @@ for i = 1:size(database_file,1)
 
     % -- read as .raw file
     [speech_file_wav,fs] = audioread(in_file);
+    if fs ~= Fs    % Resampling
+        speech_file_wav = resample(speech_file_wav,Fs,fs);
+    end
     speech_file = speech_file_wav(:,1).*(2^15);
     speech_int16 = int16(speech_file);
 
@@ -104,6 +107,7 @@ n_vec = int16(n_vec);
 
 for noi_lev_num = 1 : length(noi_lev_vec)
     noi_lev = noi_lev_vec{noi_lev_num};
+    fprintf('Working on %s case--> \n', num2str(noi_lev));
     % --- Make the noise level according to the set SNR
     noise_contr = ['-sf 8000 -lev ' num2str(noi_lev) ' -rms'];
     [~, ~, gain_noise] = actlev(noise_contr, n_vec);
@@ -125,6 +129,7 @@ for noi_lev_num = 1 : length(noi_lev_vec)
     % --- Run for all modle_type_str
     for k_model_type = 1 : length(modle_type_str_vec)
         modle_type_str = modle_type_str_vec{k_model_type};
+        fprintf('Working on %s case--> %s model \n', [num2str(noi_lev),model_type_str]);
         % --- Load Python output & load phase matrix
         load(['./test results/mask_dnn_' modle_type_str '_s_hat_snr_' num2str(noi_lev) '_model_' noi_situ_model_str '_test_data.mat']);
         load(['./test results/mask_dnn_' modle_type_str '_s_tilt_snr_' num2str(noi_lev) '_model_' noi_situ_model_str '_test_data.mat']);

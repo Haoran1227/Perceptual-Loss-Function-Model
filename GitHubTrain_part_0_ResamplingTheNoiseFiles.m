@@ -14,8 +14,8 @@
 clear
 addpath(genpath(pwd));
 foldername = '.\Audio Data\Raw_noise\';
-training_noise_path = '.\Audio Data\training_noise_8kHz.wav';
-test_noise_path = '.\Audio Data\test_noise_8kHz.wav';
+training_noise_path = '.\Audio Data\training_noise.wav';
+test_noise_path = '.\Audio Data\test_noise.wav';
 required_freq = 8000;
 training_length = 13;   % the minutes of the training noise
 test_length = 2;        % the minutes of the test noise

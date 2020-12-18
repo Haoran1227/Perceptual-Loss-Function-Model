@@ -56,8 +56,8 @@ for noi_lev_num = 1 : length(noi_lev_vec)
     freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 
     % --- Directories
-    database_dir = '.\Audio Data\test_speech_8kHz\';
-    noi_file_name = '.\Audio Data\test_noise_8kHz.wav';
+    database_dir = '.\Audio Data\test_speech\';
+    noi_file_name = '.\Audio Data\test_noise.wav';
 
     % --- Loop for loading clean speech
     s1 = cell(1,1);
@@ -69,6 +69,9 @@ for noi_lev_num = 1 : length(noi_lev_vec)
 
         % -- read as .raw file
         [speech_file_wav,fs] = audioread(in_file);
+        if fs ~= Fs    % Resampling
+        speech_file_wav = resample(speech_file_wav,Fs,fs);
+        end
         speech_file = speech_file_wav(:,1).*(2^15);
         speech_int16 = int16(speech_file);
 

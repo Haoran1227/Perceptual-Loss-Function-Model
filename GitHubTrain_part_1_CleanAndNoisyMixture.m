@@ -51,8 +51,8 @@ fram_shift = fram_leng/2; % frame shift
 freq_coeff_leng = fram_shift + 1; % half-plus-one frequency coefficients
 
 % --- Input directories
-database_dir = '.\Audio Data\training_and_validation_speech_8kHz\';
-noise_dir = '.\Audio Data\training_noise_8kHz.wav';
+database_dir = '.\Audio Data\training_and_validation_speech\';
+noise_dir = '.\Audio Data\training_noise.wav';
 
 % --- Output directories
 train_sspeech_dir = '.\train\speech_clean_s_speech.mat';
@@ -70,6 +70,9 @@ for i = 1:size(database_file,1)
 
     % -- read as .raw file
     [speech_file_wav,fs] = audioread(in_file);
+    if fs ~= Fs    % Resampling
+        speech_file_wav = resample(speech_file_wav,Fs,fs);
+    end
     speech_file = speech_file_wav(:,1).*(2^15);
     speech_int16 = int16(speech_file);
 
