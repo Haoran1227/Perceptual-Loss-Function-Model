@@ -45,6 +45,7 @@ noi_lev_vec = {-21,-26,-31,-36,-41,-46};
 for noi_lev_num = 1 : length(noi_lev_vec)
     clearvars -except noi_lev_vec noi_lev_num;
     noi_lev = noi_lev_vec{noi_lev_num};
+    fprintf(' working on %sdB case --> \n', num2str(-noi_lev-26));
 
     % --- Settings
     noi_situ_model_str = '6snrs';
@@ -122,7 +123,8 @@ for noi_lev_num = 1 : length(noi_lev_vec)
     n_vec_all = n_vec_scale;
     s_vec_all = s_vec;
     s_vec_all_leng = length(s_vec_all);
-    audiowrite(['./test data/test_mixture' num2str(noi_lev) '.wav'], y_vec_all./max(abs(y_vec_all)), Fs)
+    audiowrite(['./test data/' num2str(-noi_lev-26) 'dB_test_clean.wav'], s_vec_all./max(abs(s_vec_all)), Fs)
+    audiowrite(['./test data/' num2str(-noi_lev-26) 'dB_test_mixture.wav'], y_vec_all./max(abs(y_vec_all)), Fs)
 
     % --- Compute FFT coeffi. and phase for the 3 signals
     wd = hanning(fram_leng,'periodic');

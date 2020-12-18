@@ -129,7 +129,6 @@ for noi_lev_num = 1 : length(noi_lev_vec)
     % --- Run for all modle_type_str
     for k_model_type = 1 : length(modle_type_str_vec)
         modle_type_str = modle_type_str_vec{k_model_type};
-        fprintf('Working on %s case--> %s model \n', [num2str(noi_lev),model_type_str]);
         % --- Load Python output & load phase matrix
         load(['./test results/mask_dnn_' modle_type_str '_s_hat_snr_' num2str(noi_lev) '_model_' noi_situ_model_str '_test_data.mat']);
         load(['./test results/mask_dnn_' modle_type_str '_s_tilt_snr_' num2str(noi_lev) '_model_' noi_situ_model_str '_test_data.mat']);
